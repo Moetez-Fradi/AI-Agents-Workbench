@@ -7,4 +7,5 @@ langfuse.txt
 face-course.ipynb
 /Mistral7B
 test.ipynb
-tools/__pycache__/
+__pycache__/
+/general_testing
