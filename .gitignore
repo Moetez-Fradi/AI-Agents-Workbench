@@ -1,0 +1,10 @@
+/.ipynb_checkpoints
+/hf-env
+/llama_3b
+/Qwen3
+command
+langfuse.txt
+face-course.ipynb
+/Mistral7B
+test.ipynb
+tools/__pycache__/
