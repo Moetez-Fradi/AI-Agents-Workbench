@@ -5,14 +5,13 @@ from scripts.vector_db import search
 from scripts.embeddings import embed_texts
 import json
 import gc
-# from tools.googleSearch import google_search
-
 
 def search_vector(texts):
     vector = embed_texts(texts)
     return search(vector[0])
 
 
+#loading the model, Qwen3-4B-base
 model_path = "./Qwen3"
 
 bnb = BitsAndBytesConfig(
@@ -155,13 +154,12 @@ def llm_generate(prompt: str, max_new_tokens: int = 200) -> str:
                 **inputs,
                 max_new_tokens=max_new_tokens,
                 do_sample=False,
-                use_cache=False,  # or False if short gen
+                use_cache=False, # True only when wanting to generate responses in a stream fashion
             )
     except torch.cuda.OutOfMemoryError:
-        print("⚠️ Out of memory on GPU. Falling back to CPU.")
+        print("Falling back to CPU.")
         torch.cuda.empty_cache()
 
-        # Move model to CPU
         model.to("cpu")
 
         # Move inputs to CPU
@@ -186,27 +184,31 @@ def run_agent(user_question: str) -> str:
         tokenize=False,
         add_generation_prompt=True,
     )
+    
     print("generating first response...")
+    
     raw1 = llm_generate(prompt1, max_new_tokens=100)
+    
+    # empty memory (for low end devices)
     del prompt1
     torch.cuda.empty_cache()
     gc.collect()
     
     print("raw1:", raw1)
 
+    # find the JSON block in the response (we select the last one since the SYSTEM_PROMPT containts "<JSON>" as well)
     matches = re.findall(r"<JSON>\s*(\{.*?\})\s*</JSON>", raw1, re.DOTALL)
     if not matches:
-        return f"🛑 Model did not output a tool call JSON.\n\n{raw1}"
+        return f"Model did not output a tool call.\n\n{raw1}"
 
     json_block = matches[-1].strip()
-
-    print("RAW JSON block:")
-    print(json_block)
 
     try:
         call = json.loads(json_block)
     except json.JSONDecodeError as e:
-        return f"❌ Failed to parse JSON: {e}\n\nRaw block:\n{json_block}"
+        return f"Failed to parse JSON: {e}\n\nRaw block:\n{json_block}"
+    except Exception as e:
+        return f"error occurred while parsing JSON: {e}\n\nRaw block:\n{json_block}"
 
 
     print("tool call:", call)
@@ -236,6 +238,7 @@ def run_agent(user_question: str) -> str:
     )
 
     torch.cuda.empty_cache()
+    
     print("generating follow-up response...")
     raw2 = llm_generate(
         tokenizer.apply_chat_template(
@@ -252,7 +255,7 @@ def run_agent(user_question: str) -> str:
 
 
 if __name__ == "__main__":
-    print("🔎 Qdrant-Agent ready. Type your question and press Enter.")
+    print("Qdrant-Agent ready. Type your prompt and press Enter.")
     try:
         while True:
             q = input("\nYou> ").strip()
@@ -262,131 +265,3 @@ if __name__ == "__main__":
             print("\nAgent>", answer)
     except (KeyboardInterrupt, EOFError):
         print("\nGoodbye!")
-
-
-# Version 1
-
-# def extract_last_code_block(text):
-#     code_blocks = re.findall(r"<CODE>(.*?)</CODE>", text, re.DOTALL)
-#     if code_blocks:
-#         return code_blocks[-1].strip()
-#     return None
-
-# def run_agent(prompt):
-#     system = """
-# You are an AI assistant that answers questions by calling these tools:
-
-# 1. embed_texts(texts: List[str]) → List[List[float]]
-#    • Takes a list of strings, returns a list of embedding‐vectors.
-
-# 2. search(vectors: List[List[float]]) → str
-#    • Takes a list of flat float‐lists; returns a newline‐delimited
-#      string of the top matches.
-
-# When you want to call a tool, output *only* valid JSON, e.g.:
-
-# <JSON>
-# {
-#   "tool": "embed_texts",
-#   "args": { "texts": ["Who is Valbio?"] }
-# }
-# </JSON>
-
-# Once I run that, I will pass your JSON output back into you with the key `"tool_result"`.
-# Then you can produce your final natural‐language answer.
-
-# """
-#     messages = [
-#         {"role": "system", "content": system},
-#         {"role": "user", "content": prompt},
-#     ]
-#     prompt1 = tokenizer.apply_chat_template(
-#         messages, tokenize=False, add_generation_prompt=True
-#     )
-#     inputs = tokenizer(prompt1, return_tensors="pt").to(model.device)
-#     with torch.no_grad():
-#         out1 = model.generate(
-#             **inputs,
-#             max_new_tokens=300,
-#             do_sample=False,
-#             eos_token_id=tokenizer.eos_token_id,
-#         )
-#     full1 = tokenizer.decode(out1[0], skip_special_tokens=False)
-
-#     print("\n lena l code \n\n")
-#     print(full1)
-
-#     while True:
-#         payload = re.search(r"<JSON>(.*?)</JSON>", full1, re.DOTALL)
-#         if not payload:
-#             print("LLM didn’t output a tool call.  Answer:", full1)
-#             continue
-#         call = json.loads(payload.group(1))
-
-#         # 3) exec the tool
-#         if call["tool"] == "embed_texts":
-#             vectors = embed_texts(**call["args"])
-#             tool_out = vectors
-#             break
-#         elif call["tool"] == "search":
-#             # ensure pure python list, not np.array
-#             clean = [list(v) for v in call["args"]["vectors"]]
-#             tool_out = search(clean)
-#             break
-#         else:
-#             tool_out = f"Unknown tool {call['tool']}"
-#             break
-
-#     # code = extract_last_code_block(full1)
-#     # safe_code = code.encode("ascii", "ignore").decode("ascii")
-
-#     # print("\n lena l code \n\n")
-#     # print(safe_code)
-
-#     # old_stdout = sys.stdout
-#     # sys.stdout = StringIO()
-#     # try:
-#     #     exec(safe_code, {"embed_texts": embed_texts, "search": search})
-#     #     result = sys.stdout.getvalue().strip()
-#     # except Exception as e:
-#     #     result = f"ERROR: {e}"
-#     # finally:
-#     #     sys.stdout = old_stdout
-
-#     system2 = (
-#         """
-# You are a helpful assistant.
-# The user asked: """
-#         + prompt
-#         + """
-
-# Your search produced: """
-#         + tool_out
-#         + """
-
-# Now give a **concise**, **final answer** to the user, in plain language.
-# """
-#     )
-#     messages2 = [
-#         {"role": "system", "content": system2},
-#         {"role": "user", "content": "Please summarize the result above."},
-#     ]
-#     prompt2 = tokenizer.apply_chat_template(
-#         messages2, tokenize=False, add_generation_prompt=True
-#     )
-#     inputs2 = tokenizer(prompt2, return_tensors="pt").to(model.device)
-#     with torch.no_grad():
-#         out2 = model.generate(
-#             **inputs2,
-#             max_new_tokens=200,
-#             do_sample=False,
-#             eos_token_id=tokenizer.eos_token_id,
-#         )
-#     final = tokenizer.decode(out2[0], skip_special_tokens=True)
-#     return final
-
-
-# — in your REPL loop —
-# while True:
-#     user_input = input("enter your prompt\n")
-#     print(run_agent(user_input))

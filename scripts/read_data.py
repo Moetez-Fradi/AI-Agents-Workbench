@@ -18,7 +18,7 @@ def extract_text_from_txt(file_path):
         print(f"Error reading {file_path}: {e}")
         return ""
 
-# change this based on the data
+# change this based on the data...
 def split_text_into_chunks(text, chunk_size=40, overlap=5):
     words = text.split()
     chunks = []

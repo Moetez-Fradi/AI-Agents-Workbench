@@ -12,7 +12,7 @@ def free_search(query, num=2):
     for link in soup.select(".result__a")[:num]:
         href = link.get("href")
         
-        # If it's a DuckDuckGo redirect link, extract the real URL
+        # extracting the real URL
         if href.startswith("//duckduckgo.com/l/"):
             parsed_qs = parse_qs(urlparse(href).query)
             if "uddg" in parsed_qs:
