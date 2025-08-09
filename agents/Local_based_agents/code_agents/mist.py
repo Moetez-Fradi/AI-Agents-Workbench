@@ -18,7 +18,6 @@ def cut(text):
 
     return text
 
-
 model_path = "./Mistral7B"
 
 bnb = BitsAndBytesConfig(

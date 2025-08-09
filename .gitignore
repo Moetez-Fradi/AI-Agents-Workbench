@@ -9,3 +9,4 @@ face-course.ipynb
 test.ipynb
 __pycache__/
 /general_testing
+agents/API_based_agents/.env
