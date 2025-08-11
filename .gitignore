@@ -10,3 +10,5 @@ test.ipynb
 __pycache__/
 /general_testing
 agents/API_based_agents/.env
+/agents/API_based_agents/llama_rag/db_chroma
+/data/cheat/cheat_sheet.txt
