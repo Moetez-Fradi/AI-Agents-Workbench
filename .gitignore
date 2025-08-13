@@ -2,13 +2,10 @@
 /hf-env
 /llama_3b
 /Qwen3
-command
-langfuse.txt
-face-course.ipynb
 /Mistral7B
-test.ipynb
 __pycache__/
 /general_testing
 agents/API_based_agents/.env
 /agents/API_based_agents/llama_rag/db_chroma
 /data/cheat/cheat_sheet.txt
+/agents/API_based_agents/code_agents_llama

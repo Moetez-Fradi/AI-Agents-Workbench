@@ -13,6 +13,7 @@ import asyncio
 import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
 import warnings
+from llama_index.core.evaluation import FaithfulnessEvaluator
 
 warnings.filterwarnings("ignore")
 load_dotenv()
@@ -48,17 +49,24 @@ llm = OpenAILike(
 
 # OR as_retriever OR as_chat_engine
 query_engine = index.as_query_engine(
-    streaming=True,
+    # streaming=True,
     llm=llm,
     response_mode="tree_summarize", # OR refine OR compact
 )
+
+evaluator = FaithfulnessEvaluator(llm=llm)
 
 answer = query_engine.query("What are llms?")
 print("What are llms? \n")
 print(answer) # LLMs are a type of technology that enables knowledge generation and reasoning...
 print("\n")
 
+eval_result = evaluator.evaluate_response(response=answer)
+eval_result.passing
+
 answer = query_engine.query("Why do humans exist?")
 print("Why do humans exist? \n")
 print(answer) # I don't know
 print("\n")
+
+__all__ = ["query_engine"]
