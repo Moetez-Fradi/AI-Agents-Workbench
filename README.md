@@ -3,7 +3,7 @@
 This repository is a workbench for experimenting and testing with various AI agents, both API-based and local. It is organized to facilitate rapid prototyping, integration, and evaluation of agent capabilities for general AI tasks.
 
 ## Repo Structure
-
+```plaintext
 Agent Workbench/                          (Main project root for AI agent experimentation)
 ├── index_docs.py                         (Main script for indexing documentation or data)
 ├── README.md
@@ -61,3 +61,4 @@ Agent Workbench/                          (Main project root for AI agent experi
 └── tools/                                (General utilities)
     ├── search.py                         (Search utility)
     └── ...
+```
