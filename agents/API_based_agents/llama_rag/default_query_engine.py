@@ -68,5 +68,3 @@ answer = query_engine.query("Why do humans exist?")
 print("Why do humans exist? \n")
 print(answer) # I don't know
 print("\n")
-
-__all__ = ["query_engine"]

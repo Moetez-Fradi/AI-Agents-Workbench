@@ -9,3 +9,5 @@ agents/API_based_agents/.env
 /agents/API_based_agents/llama_rag/db_chroma
 /data/cheat/cheat_sheet.txt
 /agents/API_based_agents/code_agents_llama
+data/cheat
+data/indexed

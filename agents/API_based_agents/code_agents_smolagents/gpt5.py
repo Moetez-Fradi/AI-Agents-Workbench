@@ -2,7 +2,18 @@
 from smolagents import CodeAgent, DuckDuckGoSearchTool, ChatMessage
 from openai import OpenAI
 from dotenv import load_dotenv
+import requests
+import sounddevice as sd
+import soundfile as sf
+import io
+from pygame import mixer
+from gtts import gTTS
+import warnings
 
+warnings.filterwarnings("ignore")
+
+
+url = "http://127.0.0.1:8080/v1/tts"
 load_dotenv()
 client = OpenAI()
 
@@ -114,5 +125,47 @@ agent = CodeAgent(
     model=OpenRouterModel(MODEL)
 )
 
-prompt = input("Enter your prompt: \n")
-agent.run(prompt)
+
+
+if __name__ == "__main__":
+    print("Welcome to the GPT-5 Code Agent!")
+    print("You can ask it to write code, search for information, or answer questions.")
+    print("Type 'exit' to quit the program.")
+    while True:
+        try:
+            prompt = input("Enter your prompt: \n")
+            response = agent.run(prompt).split("Final Answer:")[-1].strip()
+            tts = gTTS(response, lang='en')
+            
+            fp = io.BytesIO()
+            tts.write_to_fp(fp)
+            fp.seek(0)
+            
+            mixer.init()
+            mixer.music.load(fp, 'mp3')
+            mixer.music.play()
+
+            while mixer.music.get_busy():
+                pass
+                        
+            # payload = {
+            #     "text": response,
+            #     "format": "wav",
+            #     "streaming": False
+            # }
+            # response = requests.post(url, json=payload)
+            # if response.status_code == 200:
+            #     audio_data = BytesIO(response.content)
+                
+            #     data, samplerate = sf.read(audio_data)
+                
+            #     sd.play(data, samplerate)
+            #     sd.wait()  
+            # else:
+                # print("Request failed:", response.status_code, response.text)
+        except KeyboardInterrupt:
+            print("\nExiting the program. Goodbye!")
+            break
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            continue
